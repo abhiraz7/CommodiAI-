@@ -6,6 +6,7 @@ import random
 import time
 import csv
 import os
+from datetime import datetime, timedelta
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -16,7 +17,13 @@ def random_delay(min_delay=1, max_delay=3):
     logging.info(f"Taking a short nap for {delay:.2f} seconds..")
     time.sleep(delay)
 
-async def scrape_enam_trade_data(file_name="APMC Data\enam_trade_data.csv"):
+async def scrape_enam_trade_data(file_name=None):
+    # Use a relative path based on the project structure
+    if file_name is None:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        file_name = os.path.join(base_dir, "data", "enam_trade_data.csv")
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(file_name), exist_ok=True)
     # Ensure the CSV file exists and has headers
     if not os.path.exists(file_name):
         columns = [
@@ -79,8 +86,8 @@ async def scrape_enam_trade_data(file_name="APMC Data\enam_trade_data.csv"):
 
                 await page.select_option("#min_max_apmc", value=apmc_value)
                 await page.wait_for_timeout(1000)
-                await page.fill("#min_max_apmc_from_date", "2025-04-24")
-                await page.fill("#min_max_apmc_to_date", "2025-04-25")
+
+            
 
                 random_delay()
 
@@ -93,22 +100,17 @@ async def scrape_enam_trade_data(file_name="APMC Data\enam_trade_data.csv"):
                 rows = await page.query_selector_all("table tbody tr")
                 logging.info(f"Found {len(rows)} rows of data for {apmc_label}. Starting to scrape...")
 
-                # Extract all rows and cells in one go
-                table_data = []
-                for row in rows:
-                    cells = await row.query_selector_all("td")
-                    if cells:
-                        # Extract all cell text in one asynchronous call
-                        row_data = await asyncio.gather(*[cell.inner_text() for cell in cells])
-                        row_data.extend([apmc_label, state_label])  
-                        table_data.append(row_data)
-
-                # Append all rows to the CSV file in one operation
+                # Write each row immediately after scraping
                 with open(file_name, mode="a", newline="", encoding="utf-8") as file:
                     writer = csv.writer(file)
-                    writer.writerows(table_data)
+                    for row in rows:
+                        cells = await row.query_selector_all("td")
+                        if cells:
+                            row_data = await asyncio.gather(*[cell.inner_text() for cell in cells])
+                            row_data.extend([apmc_label, state_label])
+                            writer.writerow(row_data)
 
-                logging.info(f"Appended {len(table_data)} rows to {file_name} for APMC: {apmc_label}")
+                logging.info(f"Appended {len(rows)} rows to {file_name} for APMC: {apmc_label}")
 
         logging.info("Scraping completed. Closing the browser.")
         await browser.close()

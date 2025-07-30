@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agri Data Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { background: #f8fafc; }
+        .navbar { background: #198754; }
+        .navbar-brand, .nav-link, .footer { color: #fff !important; }
+        .summary-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #0001; }
+        .footer { background: #198754; padding: 1rem 0; text-align: center; margin-top: 2rem; }
+        .table thead { background: #198754; color: #fff; }
+        .plotly-graph-div { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px #0001; padding: 1rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg mb-4">
+        <a class="navbar-brand" href="#"><i class="fas fa-leaf"></i> Agri Data Dashboard</a>
+    </nav>
+    <div class="container">
+        <form method="get" class="form-inline mb-4">
+            <label class="mr-2 font-weight-bold" for="state">Select State:</label>
+            <select name="state" id="state" class="form-control mr-2" onchange="this.form.submit()">
+                {% for state in states %}
+                    <option value="{{ state }}" {% if state == selected_state %}selected{% endif %}>{{ state }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-2">
+                <div class="summary-card p-3 text-center">
+                    <h5><i class="fas fa-balance-scale"></i> Total Traded Quantity</h5>
+                    <h3 class="text-success">
+                        {{
+                            table_data | sum(attribute='Traded Quantity') if table_data and 'Traded Quantity' in table_data[0] else 'N/A'
+                        }}
+                    </h3>
+                </div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="summary-card p-3 text-center">
+                    <h5><i class="fas fa-apple-alt"></i> Commodities</h5>
+                    <h3 class="text-primary">
+                        {{
+                            table_data | map(attribute='Commodity') | unique | list | length if table_data and 'Commodity' in table_data[0] else 'N/A'
+                        }}
+                    </h3>
+                </div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="summary-card p-3 text-center">
+                    <h5><i class="fas fa-calendar-day"></i> Latest Date</h5>
+                    <h3 class="text-info">
+                        {{
+                            table_data[-1]['Date'] if table_data and 'Date' in table_data[-1] else 'N/A'
+                        }}
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div id="chart" class="plotly-graph-div mb-4">
+            {% if graphJSON %}
+                <div id="plotly-div"></div>
+                <script>
+                    var plotly_data = {{ graphJSON | safe }};
+                    Plotly.newPlot('plotly-div', plotly_data.data, plotly_data.layout, {responsive: true});
+                </script>
+            {% else %}
+                <p>No chart data available.</p>
+            {% endif %}
+        </div>
+
+        <h2 class="mt-5 mb-3">Latest Data</h2>
+        <div class="table-responsive">
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        {% for col in table_data[0].keys() %}
+                            <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_data %}
+                        <tr>
+                            {% for val in row.values() %}
+                                <td>{{ val }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="footer">
+        <span>&copy; {{ 2025 }} CommodiAI | Powered by Flask &amp; Plotly</span>
+    </div>
+</body>
+</html>
