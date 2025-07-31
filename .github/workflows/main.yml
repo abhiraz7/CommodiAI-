@@ -1,6 +1,5 @@
 name: CI/CD Pipeline
-
-    on:
+on:
       push:
         branches:
           - main # Trigger on pushes to the main branch
@@ -8,7 +7,7 @@ name: CI/CD Pipeline
         branches:
           - main # Trigger on pull requests to the main branch
 
-    jobs:
+jobs:
       build-and-test:
         runs-on: ubuntu-latest # Specify the runner environment
         steps:
