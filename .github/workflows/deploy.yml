@@ -27,4 +27,7 @@ jobs:
           source venv/bin/activate
           pip install -r agri-data-website/requirements.txt
           sudo systemctl restart apmc-web
-        EOF
+    - name: Test SSH Connection
+      run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "echo Hello from EC2"
+            EOF
