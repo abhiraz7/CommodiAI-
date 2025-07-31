@@ -1,0 +1,32 @@
+name: CI/CD Pipeline
+
+    on:
+      push:
+        branches:
+          - main # Trigger on pushes to the main branch
+      pull_request:
+        branches:
+          - main # Trigger on pull requests to the main branch
+
+    jobs:
+      build-and-test:
+        runs-on: ubuntu-latest # Specify the runner environment
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4 # Action to check out your repository code
+
+
+      deploy:
+        needs: build-and-test # This job depends on the success of 'build-and-test'
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main' # Only deploy from the main branch
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v4
+
+          # - name: Deploy to production (example using a generic script)
+          #   run: |
+          #     echo "Deploying application..."
+          #     # Add your specific deployment commands here, e.g.,
+          #     # scp -r ./build user@your-server:/var/www/html
+          #     # ssh user@your-server "sudo systemctl restart your-app"
