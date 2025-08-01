@@ -5,7 +5,7 @@ This project consists of two main components: an agricultural data website and a
 ## Project Structure
 
 ```
-apmc-scraper-project
+CommodiAI-
 ├── agri-data-website
 │   ├── app.py
 │   ├── templates
