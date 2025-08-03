@@ -1,26 +1,30 @@
-name: Daily Scraper Job
+name: Run Scraper on EC2
 
 on:
+  push:
+    branches:
+      - main
   schedule:
-    - cron: "0 3 * * *"  # Every day at 3 AM UTC (8:30 AM IST)
-  workflow_dispatch:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
 
 jobs:
-  scrape:
+  run-scraper:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Set up SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-    - name: Run scraper on EC2
-      run: |
-        ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          cd ~/apmc-scraper-project/scraper
-          source ../venv/bin/activate
-          python APMC_Scraper.py
-        EOF
+      - name: Run scraper.py on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e  # Exit if any command fails
+            cd ~/CommodiAI-/agri-data-website/
+            source ../venv/bin/activate
+            python scraper.py
+            echo "✅ Scraper ran successfully at $(date)"
+          EOF
