@@ -24,6 +24,9 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e  # Exit if any command fails
             cd ~/CommodiAI-/scraper
+            git fetch --prune
+            rm -f .git/refs/remotes/origin/main
+            git fetch origin
             git pull origin main
             source ../venv/bin/activate
             pip install -r requirements.txt
