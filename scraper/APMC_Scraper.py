@@ -9,7 +9,12 @@ import os
 from datetime import datetime, timedelta
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 # Random delay function to mimic human behavior
 def random_delay(min_delay=1, max_delay=3):
