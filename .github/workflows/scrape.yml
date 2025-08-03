@@ -25,7 +25,7 @@ jobs:
             set -e  # Exit if any command fails
             cd ~/CommodiAI-/scraper
             git pull origin main
-            source venv/bin/activate  
+            source ../venv/bin/activate
             pip install -r requirements.txt
             playwright install
             python APMC_scraper.py
