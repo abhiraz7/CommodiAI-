@@ -32,6 +32,6 @@ jobs:
             source ../venv/bin/activate
             pip install -r requirements.txt
             playwright install
-            python APMC_scraper.py
+            python APMC_Scraper.py
             echo "✅ Scraper ran successfully at $(date)"
           EOF
