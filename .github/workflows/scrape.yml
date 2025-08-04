@@ -8,61 +8,71 @@ on:
     - cron: '0 2 * * *'  # Daily at 2 AM UTC
 
 jobs:
-  run-scraper:
+  setup-dependencies:
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Setup SSH
         run: |
-          echo "[INFO] Creating SSH directory..."
           mkdir -p ~/.ssh
-          echo "[INFO] Adding EC2 SSH key..."
           echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          echo "[INFO] Adding EC2 host to known_hosts..."
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Install Playwright dependencies
+      - name: Install dependencies on EC2
         run: |
-          echo "[INFO] Updating apt-get..."
-          sudo apt-get update
-          echo "[INFO] Installing Playwright dependencies for Ubuntu 24.04+..."
-          
-          if command -v npx >/dev/null 2>&1; then
-            echo "[INFO] npx found! Installing Playwright dependencies with npx..."
-            sudo /home/***/CommodiAI-/venv/bin/playwright install-deps
-
-          else
-            echo "[WARN] npx not found. Installing fallback dependencies..."
-            sudo apt-get install -y libatk1.0-0 libatk-bridge2.0-0 libcups2 libatspi2.0-0 \
-              libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libcairo2 \
-              libpango-1.0-0 libasound2
-          fi
-
-      - name: Run scraper.py on EC2
-        run: |
-          echo "[INFO] Connecting to EC2 and running scraper..."
+          echo "[INFO] Setting up dependencies on EC2..."
           ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-            echo "[EC2] Changing to scraper directory..."
-            cd ~/CommodiAI-/scraper
-
-            echo "[EC2] Cleaning up git locks and syncing repo..."
-            rm -f .git/refs/remotes/origin/main.lock
-            git remote prune origin
-            git fetch --prune
-            git pull origin main
-
-            echo "[EC2] Activating Python virtual environment..."
-            source ../venv/bin/activate
-
-            echo "[EC2] Installing Python requirements..."
-            pip install -r requirements.txt
-
+            echo "[EC2] Syncing latest code..."
+            cd ~/CommodiAI- && git pull origin main
+            
+            echo "[EC2] Activating virtual environment..."
+            source venv/bin/activate
+            
+            echo "[EC2] Installing Python dependencies..."
+            pip install -r scraper/requirements.txt
+            
+            echo "[EC2] Installing system dependencies..."
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq \
+              libatk1.0-0t64 \
+              libatk-bridge2.0-0t64 \
+              libcups2t64 \
+              libatspi2.0-0t64 \
+              libxcomposite1 \
+              libxdamage1 \
+              libxfixes3 \
+              libxrandr2 \
+              libgbm1 \
+              libcairo2 \
+              libpango-1.0-0 \
+              libasound2t64
+            
             echo "[EC2] Installing Playwright browsers..."
-            playwright install
+            python -m playwright install chromium
+            
+            echo "✅ [EC2] Dependencies setup completed"
+          EOF
 
-            echo "[EC2] Running the APMC Scraper..."
+  run-scraper:
+    runs-on: ubuntu-latest
+    needs: setup-dependencies
+    
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Run APMC Scraper
+        run: |
+          echo "[INFO] Running scraper on EC2..."
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            echo "[EC2] Starting scraper..."
+            cd ~/CommodiAI-/scraper
+            source ../venv/bin/activate
             python APMC_Scraper.py
-
-            echo "✅ [EC2] Scraper ran successfully at $(date)"
+            echo "✅ [EC2] Scraper completed at $(date)"
           EOF
