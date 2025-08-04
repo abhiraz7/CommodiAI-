@@ -27,12 +27,11 @@ jobs:
           echo "[INFO] Updating apt-get..."
           sudo apt-get update
           echo "[INFO] Installing Playwright dependencies for Ubuntu 24.04+..."
-          sudo apt-get install -y \
-            libasound2t64 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
-            libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1
+          
           if command -v npx >/dev/null 2>&1; then
             echo "[INFO] npx found! Installing Playwright dependencies with npx..."
-            sudo npx playwright install-deps
+            sudo /home/***/CommodiAI-/venv/bin/playwright install-deps
+
           else
             echo "[WARN] npx not found. Installing fallback dependencies..."
             sudo apt-get install -y libatk1.0-0 libatk-bridge2.0-0 libcups2 libatspi2.0-0 \
