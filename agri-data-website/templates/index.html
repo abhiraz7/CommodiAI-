@@ -36,37 +36,26 @@
             <div class="col-md-4 mb-2">
                 <div class="summary-card p-3 text-center">
                     <h5><i class="fas fa-balance-scale"></i> Total Traded Quantity</h5>
-                    <h3 class="text-success">
-                        {{
-                            table_data | sum(attribute='Traded Quantity') if table_data and 'Traded Quantity' in table_data[0] else 'N/A'
-                        }}
-                    </h3>
+                    <h3 class="text-success">{{ total_traded_quantity }}</h3>
                 </div>
             </div>
             <div class="col-md-4 mb-2">
                 <div class="summary-card p-3 text-center">
                     <h5><i class="fas fa-apple-alt"></i> Commodities</h5>
-                    <h3 class="text-primary">
-                        {{
-                            table_data | map(attribute='Commodity') | unique | list | length if table_data and 'Commodity' in table_data[0] else 'N/A'
-                        }}
-                    </h3>
+                    <h3 class="text-primary">{{ commodities_count }}</h3>
                 </div>
             </div>
             <div class="col-md-4 mb-2">
                 <div class="summary-card p-3 text-center">
-                    <h5><i class="fas fa-calendar-day"></i> Latest Date</h5>
-                    <h3 class="text-info">
-                        {{
-                            table_data[-1]['Date'] if table_data and 'Date' in table_data[-1] else 'N/A'
-                        }}
-                    </h3>
+                    <h5><i class="fas fa-calendar"></i> Latest Date</h5>
+                    <h3 class="text-info">{{ latest_date }}</h3>
                 </div>
             </div>
         </div>
 
         <!-- Chart -->
         <div id="chart" class="plotly-graph-div mb-4">
+            
             {% if graphJSON %}
                 <div id="plotly-div"></div>
                 <script>
@@ -78,6 +67,24 @@
             {% endif %}
         </div>
 
+        <!-- Commodity Price Trend Graphs -->
+        {% if trend_graphs %}
+            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+            {% for trend in trend_graphs %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ trend.commodity }} Price Trend</h5>
+                        <div id="graph-{{ loop.index }}"></div>
+                    </div>
+                </div>
+                <script>
+                    var graphData = {{ trend.graphJSON | safe }};
+                    Plotly.newPlot('graph-{{ loop.index }}', graphData.data, graphData.layout);
+                </script>
+            {% endfor %}
+        {% endif %}
+
+        {# 
         <h2 class="mt-5 mb-3">Latest Data</h2>
         <div class="table-responsive">
             <table class="table table-striped mt-3">
@@ -99,6 +106,7 @@
                 </tbody>
             </table>
         </div>
+        #}
     </div>
     <div class="footer">
         <span>&copy; {{ 2025 }} CommodiAI | Powered by Flask &amp; Plotly</span>

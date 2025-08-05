@@ -23,22 +23,50 @@ def index():
     # Filter data by selected state
     filtered_df = df[df["State"] == selected_state] if selected_state else df
 
-    # Analytics: Top 10 Commodities by Traded Quantity in selected state
-    graphJSON = None
-    if "Commodity" in filtered_df.columns and "Traded Quantity" in filtered_df.columns:
-        filtered_df["Traded Quantity"] = pd.to_numeric(filtered_df["Traded Quantity"], errors='coerce')
-        summary = filtered_df.groupby("Commodity")["Traded Quantity"].sum().reset_index()
-        summary = summary.sort_values("Traded Quantity", ascending=False).head(10)
-        fig = px.bar(summary, x="Commodity", y="Traded Quantity", title=f"Top 10 Commodities in {selected_state}")
-        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    # --- Summary Calculations ---
+    # Total Traded Quantity
+    if "Traded Quantity" in filtered_df.columns and not filtered_df.empty:
+        filtered_df["Traded Quantity"] = pd.to_numeric(filtered_df["Traded Quantity"], errors="coerce")
+        total_traded_quantity = int(filtered_df["Traded Quantity"].sum())
+    else:
+        total_traded_quantity = "N/A"
 
-    # Show the latest 20 rows in the table
-    table_data = filtered_df.tail(20).to_dict(orient="records")
+    # Commodities count
+    if "Commodity" in filtered_df.columns and not filtered_df.empty:
+        commodities_count = int(filtered_df["Commodity"].nunique())
+    else:
+        commodities_count = "N/A"
+
+    # Latest date
+    if "Date" in filtered_df.columns and not filtered_df.empty:
+        filtered_df["Date"] = pd.to_datetime(filtered_df["Date"], dayfirst=True, errors="coerce")
+        latest_date_val = filtered_df["Date"].max()
+        latest_date = latest_date_val.strftime("%d-%m-%Y") if pd.notnull(latest_date_val) else "N/A"
+    else:
+        latest_date = "N/A"
+
+    # --- Commodity Price Trends ---
+    # List of commodities to show trends for (add more as needed)
+    trend_commodities = ["ONION", "LEMON", "TURMERIC", "COTTON", "GROUND NUT", "RED CHILLI-DRY"]
+    trend_graphs = []
+
+    if "Commodity" in filtered_df.columns and "Modal Price (Rs.)" in filtered_df.columns and "Date" in filtered_df.columns:
+        filtered_df["Modal Price (Rs.)"] = pd.to_numeric(filtered_df["Modal Price (Rs.)"].astype(str).str.replace(",", ""), errors="coerce")
+        filtered_df["Date"] = pd.to_datetime(filtered_df["Date"], dayfirst=True, errors="coerce")
+        for commodity in trend_commodities:
+            comm_df = filtered_df[filtered_df["Commodity"].str.contains(commodity, case=False, na=False)]
+            if not comm_df.empty:
+                comm_df = comm_df.sort_values("Date")
+                fig = px.line(comm_df, x="Date", y="Modal Price (Rs.)", title=f"{commodity.title()} Price Trend in {selected_state}")
+                graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+                trend_graphs.append({"commodity": commodity.title(), "graphJSON": graphJSON})
 
     return render_template(
         "index.html",
-        table_data=table_data,
-        graphJSON=graphJSON,
+        total_traded_quantity=total_traded_quantity,
+        commodities_count=commodities_count,
+        latest_date=latest_date,
+        trend_graphs=trend_graphs,
         states=states,
         selected_state=selected_state
     )
