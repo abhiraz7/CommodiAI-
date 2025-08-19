@@ -5,17 +5,40 @@ This project consists of two main components: an agricultural data website and a
 ## Project Structure
 
 ```
-CommodiAI-
-├── agri-data-website
-│   ├── app.py
-│   ├── templates
-│   │   └── index.html
-│   └── requirements.txt
-├── scraper
-│   └── APMC_Scraper.py
-├── data
-│   └── agri_data.csv
+commodityai/
+├── .github/
+│   └── workflows/
+│       ├── deploy.yml
+│       └── scrape.yml
+│
+├── frontend/               # agri-data-website
+│
+├── backend/
+│   └── scraper/
+│       ├── agmark_scraper.py
+│       ├── enam_scraper.py
+│       └── scheduler.py
+│
+├── ai_models/              # NEW: AI/ML models folder
+│   ├── prophet_model.py    # Time-series forecasting
+│   ├── arima_model.py      # ARIMA model
+│   ├── lstm_model.py       # Deep learning model
+│   ├── forecast_utils.py   # Preprocessing, evaluation metrics
+│   └── __init__.py
+│
+├── data/
+│   ├── raw/
+│   └── processed/
+│
+├── monitoring/             # (Planned: Prometheus config, Grafana dashboards)
+│
+├── terraform/              # (Planned: IaC configs)
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+│
 └── README.md
+
 ```
 
 ## Components
